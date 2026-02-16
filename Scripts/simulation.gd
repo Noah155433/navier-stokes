@@ -14,6 +14,12 @@ func _ready() -> void:
 	drawShaderMaterial = drawMesh.material as ShaderMaterial
 	drawShaderMaterial.set_shader_parameter("gridSize", Vector2i(GridSizeX, GridSizeY))
 
-func _physics_process(_delta: float) -> void:
+func _physics_process(delta: float) -> void:
+	
+	fluidGrid.deltaTime = delta
+	fluidGrid.UpdateVelocities()
+	for i in GridSizeX:
+		for j in GridSizeY:
+			fluidGrid.PressureSolveCell(i, j)
 	drawShaderMaterial.set_shader_parameter("gridTexture", fluidGrid.drawGridDivergence())
 	
