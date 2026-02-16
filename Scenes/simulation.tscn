@@ -11,8 +11,8 @@ shader_parameter/gridSize = Vector2(0, 0)
 
 [node name="Simulation" type="Node2D" unique_id=1554315379]
 script = ExtResource("1_ql6px")
-GridSizeX = 5
-GridSizeY = 3
+GridSizeX = 7
+GridSizeY = 5
 CellSize = 5.0
 
 [node name="MeshInstance2D" type="MeshInstance2D" parent="." unique_id=1239795294]

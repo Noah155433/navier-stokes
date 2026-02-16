@@ -15,6 +15,8 @@ var gridDivergenceTexture : ImageTexture
 var gridPressureImage : Image
 var gridPressureTexture : ImageTexture
 
+var gridStateImage : Image
+
 var density : float = 1.0
 
 var deltaTime : float = 0.0
@@ -25,11 +27,21 @@ func _init(cellCountX : int, cellCountY : int, cellSize : float) -> void:
 	CellCountY = cellCountY
 	CellSize = cellSize
 	
-	gridDivergenceImage = Image.create(cellCountX, cellCountY, false, Image.FORMAT_RGB8)
+	gridDivergenceImage = Image.create(cellCountX, cellCountY, false, Image.FORMAT_R8)
 	gridDivergenceTexture = ImageTexture.create_from_image(gridDivergenceImage)
 	
-	gridPressureImage = Image.create(cellCountX, cellCountY, false, Image.FORMAT_RGB8)
+	gridPressureImage = Image.create(cellCountX, cellCountY, false, Image.FORMAT_R8)
 	gridPressureTexture = ImageTexture.create_from_image(gridPressureImage)
+	
+	gridStateImage = Image.create(cellCountX, cellCountY, false, Image.FORMAT_R8)
+	gridStateImage.fill(Color(1, 1, 1))
+	for i in cellCountX:
+		gridStateImage.set_pixel(i, 0, Color())
+		gridStateImage.set_pixel(i, cellCountY - 1, Color())
+	
+	for i in cellCountY:
+		gridStateImage.set_pixel(0, i, Color())
+		gridStateImage.set_pixel(CellCountX - 1, i, Color())
 	
 	velocitiesX = Velocities.new(cellCountX + 1, cellCountY)
 	velocitiesY = Velocities.new(cellCountX, cellCountY + 1)
@@ -52,6 +64,14 @@ func GetPressure(x : int, y : int) -> float:
 
 func PressureSolveCell(x : int, y : int) -> void:
 	
+	var flowTop : int = 0 if IsSolid(x + 0, y + 1) else 1
+	var flowLeft : int = 0 if IsSolid(x - 1, y + 0) else 1
+	var flowRight : int = 0 if IsSolid(x + 1, y + 0) else 1
+	var flowBottom : int = 0 if IsSolid(x + 0, y - 1) else 1
+	var fluidEdgeCount : int = flowLeft + flowRight + flowTop + flowBottom
+	
+	if (IsSolid(x,y) or fluidEdgeCount == 0): gridPressureImage.set_pixel(x, y, Color(0, 0, 0))
+	
 	var pressureTop : float = GetPressure(x + 0, y + 1)
 	var pressureLeft : float = GetPressure(x - 1, y + 0)
 	var pressureRight : float = GetPressure(x + 1, y + 0)
@@ -65,20 +85,35 @@ func PressureSolveCell(x : int, y : int) -> void:
 	var pressureSum : float = pressureRight + pressureLeft + pressureTop + pressureBottom
 	var deltaVelocitySum = velocityRight - velocityLeft + velocityTop - velocityBottom
 	
-	var Pressure = (pressureSum - density * CellSize * deltaVelocitySum / deltaTime) / 4.0
+	var Pressure = (pressureSum - density * CellSize * deltaVelocitySum / deltaTime) / fluidEdgeCount
 	gridPressureImage.set_pixel(x, y, Color(Pressure, Pressure, Pressure))
+
+func IsSolid(x : int, y : int) -> bool:
+	if x >= CellCountX or y >= CellCountY or x < 0 or y < 0:
+		return true
+	if gridStateImage.get_pixel(x, y).r <= 0.5:
+		return true
+	else:
+		return false
 
 func UpdateVelocities() -> void:
 	var K : float = deltaTime / (density * CellSize)
 	
 	for x in velocitiesX.SizeX:
 		for y in velocitiesX.SizeY:
+			if(IsSolid(x, y) or IsSolid(x - 1, y)):
+				velocitiesX.setVelocity(x, y, 0)
+				print("X: ", x, " Y: ", y)
+				continue
 			var pressureRight : float = GetPressure(x, y)
 			var pressureLeft : float = GetPressure(x - 1, y)
 			velocitiesX.setVelocity(x, y, velocitiesX.getVelocity(x, y) - K * (pressureRight - pressureLeft))
 	
 	for x in velocitiesY.SizeX:
 		for y in velocitiesY.SizeY:
+			if(IsSolid(x, y) or IsSolid(x - 1, y)):
+				velocitiesY.setVelocity(x, y, 0)
+				continue
 			var pressureTop : float = GetPressure(x, y)
 			var pressureBottom : float = GetPressure(x, y - 1)
 			velocitiesY.setVelocity(x, y, velocitiesY.getVelocity(x, y) - K * (pressureTop - pressureBottom))
