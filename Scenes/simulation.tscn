@@ -1,0 +1,23 @@
+[gd_scene format=3 uid="uid://dundtcgiy5qur"]
+
+[ext_resource type="Script" uid="uid://d1jptkhagwhkt" path="res://Scripts/simulation.gd" id="1_ql6px"]
+[ext_resource type="Shader" uid="uid://c2or3jnkgibqo" path="res://Shaders/simulation.gdshader" id="2_3p1jw"]
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_diyjw"]
+shader = ExtResource("2_3p1jw")
+shader_parameter/gridSize = Vector2i(0, 0)
+
+[sub_resource type="QuadMesh" id="QuadMesh_ql6px"]
+
+[node name="Simulation" type="Node2D" unique_id=1554315379]
+script = ExtResource("1_ql6px")
+GridSizeX = 50
+GridSizeY = 50
+CellSize = 10.0
+
+[node name="MeshInstance2D" type="MeshInstance2D" parent="." unique_id=1239795294]
+material = SubResource("ShaderMaterial_diyjw")
+scale = Vector2(1080, 1080)
+mesh = SubResource("QuadMesh_ql6px")
+
+[node name="Camera2D" type="Camera2D" parent="." unique_id=544064945]
